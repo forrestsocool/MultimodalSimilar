@@ -63,7 +63,6 @@ if __name__ == '__main__':
         on a.spusn=b.spusn and a.id=b.id
     """).toPandas()
     print("pd_spu cnt : {}".format(len(pd_spu)),flush=True)
-    sc.stop()
 
     nums = 0
     for index, item in pd_spu.iterrows():
@@ -74,9 +73,10 @@ if __name__ == '__main__':
             #url = ad_url if ad_url is not None else detail_url
             url = item['mediaurl']
             #print(url)
-            request_download(url, item['spu_sn'])
+            request_download(url, item['spusn'])
             if nums % 100 == 0:
                 print("proceed {}".format(nums))
         except Exception as e:
             print(e)
             break
+    sc.stop()
