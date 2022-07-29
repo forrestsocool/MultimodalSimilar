@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="ma-user@dev-modelarts-cnsouth1.huaweicloud.com:30059 key (1)" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+    <option name="confirmBeforeUploading" value="false" />
+    <serverData>
+      <paths name="[search]10.67.3.105">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/MultimodalSimilar" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="[sol-28]192.168.1.28">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="[sol-65]192.168.1.65">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="lisensen@10.254.136.21:2222 password">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="lisensen@172.21.195.198:2222 password">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="ma-user@dev-modelarts-cnsouth1.huaweicloud.com:30007">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/ma-user/work/MultimodalSimilar" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="ma-user@dev-modelarts-cnsouth1.huaweicloud.com:30059 key">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/ma-user/work/MultimodalSimilar" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="ma-user@dev-modelarts-cnsouth1.huaweicloud.com:30059 key (1)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/ma-user/work/MultimodalSimilar" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="ma-user@dev-modelarts-cnsouth1.huaweicloud.com:32312">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@10.254.136.60:2222">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/workspace/MultimodalSimilar" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>

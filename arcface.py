@@ -34,8 +34,13 @@ class ArcMarginProduct(nn.Module):
 
     def update_m(self, delta):
         updated_m = self.m + delta
-        if updated_m >= 0.4 and updated_m <= 1.0:
+        if updated_m >= 1e-6 and updated_m <= 1.0:
             self.m = updated_m
+            self.cos_m = math.cos(self.m)
+            self.sin_m = math.sin(self.m)
+            self.th = math.cos(math.pi - self.m)
+            self.mm = math.sin(math.pi - self.m) * self.m
+
 
     def forward(self, x, label):
         # cos(theta)

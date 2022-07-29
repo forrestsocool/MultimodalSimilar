@@ -1,0 +1,20 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="list.keys" />
+          <option value="test.StructType" />
+          <option value="test.StructField" />
+          <option value="calc_store_spusn.StructType" />
+          <option value="calc_store_spusn.StructField" />
+          <option value="calc_store_spusn.IntegerType" />
+          <option value="calc_store_spusn.LongType" />
+          <option value="calc_store_spusn.StringType" />
+          <option value="calc_store_spusn.pyspark" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

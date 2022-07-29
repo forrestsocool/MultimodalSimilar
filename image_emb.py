@@ -26,9 +26,7 @@ class ImageEmb(nn.Module):
 
     def forward(self, rgb_tensor):
         outputs = self.ptm(rgb_tensor)
-        # if self.use_bn:
-        #     outputs = self.bn_layer(outputs)
-        # normed_op = F.normalize(outputs, p=2, dim=1)  # 对指定维度进行运算
-        # return normed_op
-
+        if self.use_bn:
+            outputs = self.bn_layer(outputs)
+        outputs = F.normalize(outputs, p=2, dim=1)  # 对指定维度进行运算
         return outputs
