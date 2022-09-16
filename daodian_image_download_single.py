@@ -38,9 +38,9 @@ import pyspark.sql.types as typ
 from pyspark.sql.types import StructType
 from pyspark.sql.types import StructField
 from pyspark.sql.types import StringType, IntegerType
-import threadpool
+# import threadpool
 from tqdm.auto import tqdm
-import logging
+# import logging
 import datetime
 
 show_download_status = True
@@ -65,7 +65,7 @@ def download_item(item):
             progress_bar.set_description("Processing {}-th iteration".format(index+1))
     except Exception as e:
         print(e)
-        logging.error(e)
+        # logging.error(e)
         #print("{}, {},  {} , {}".format(item['spu_sn'], item['spu_name'], item['ad_mediaurl'], item['detail_mediaurl']))
 
 oneday=datetime.timedelta(days=1)
@@ -106,13 +106,13 @@ if __name__ == '__main__':
 
     # print(f'pd_frxs_skusn length : {len(pd_frxs_skusn)}', flush=True)
 
-    pool = threadpool.ThreadPool(20)  # 线程池设置,最多同时跑20个线程
+    #pool = threadpool.ThreadPool(20)  # 线程池设置,最多同时跑20个线程
 
     progress_bar = tqdm(range(len(pd_frxs_skusn)))
     for index, item in pd_frxs_skusn.iterrows():
-        task = threadpool.makeRequests(download_item, [item])
-        pool.putRequest(task[0])
-    pool.wait()
+        download_item(item)
+        progress_bar.update(1)
+    # pool.wait()
     progress_bar.close()
     sc.stop()
     sys.exit()

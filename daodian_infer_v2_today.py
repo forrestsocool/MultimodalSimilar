@@ -1,4 +1,5 @@
 #-*- coding: utf-8 -*-
+# 版本更新：支持最近7天历史数据查询
 import os
 import cv2
 os.environ['JAVA_HOME']='/opt/Bigdata/client/JDK/jdk1.8.0_272'
@@ -322,7 +323,7 @@ parser.add_argument("--redis_host", type=str, default='1.1.1.1')
 parser.add_argument("--redis_password", type=str, default='password')
 parser.add_argument("--redis_port", type=int, default=6379)
 parser.add_argument("--redis_db", type=int, default=15)
-parser.add_argument("--exp_seconds", type=int, default=7*24*3600)
+parser.add_argument("--exp_seconds", type=int, default=int(1.5*24*3600))
 args = parser.parse_args()
 
 
@@ -384,9 +385,11 @@ if __name__ == '__main__':
         area_results = merged_result[area_id]
         for key in area_results:
             result = area_results[key]
+            target_dt_aka = args.dt.replace('-', '')
+            write_key = f'{target_dt_aka}:{key}'
             if len(result) > 0:
                 result_str = json.dumps(result).replace('[', '').replace(']', '').replace('"', '').replace(' ', '')
-                pipe.set(key, result_str)
-                pipe.expire(key, args.exp_seconds)
+                pipe.set(write_key, result_str)
+                pipe.expire(write_key, args.exp_seconds)
         pipe.execute()
         print(f'area {area_id} process finish', flush=True)

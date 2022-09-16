@@ -1,4 +1,5 @@
 #-*- coding: utf-8 -*-
+# 版本更新：支持最近7天历史数据查询
 import os
 import cv2
 os.environ['JAVA_HOME']='/opt/Bigdata/client/JDK/jdk1.8.0_272'
@@ -75,7 +76,9 @@ import albumentations
 from albumentations.pytorch.transforms import ToTensorV2
 import json
 import fasttext
+import datetime
 
+recent_days = 7
 ann_cnt_cv = 26
 ann_cnt_nlp = 100
 nlp_score_th = -0.6
@@ -201,12 +204,13 @@ def tokenize_function(example):
 #     progress_bar.close()
 #     return nlp_sku_map
 
-def get_similar_fasttext(frxs_product, nlp_model):
+def get_similar_fasttext(frxs_product, nlp_model, target_dt):
     nlp_vec_result = []
     nlp_spusn_list = []
     sku_list = []
     nlp_spuname_list = []
     cate_list = []
+    dt_list = []
     pd_spusn_proceed = frxs_product
     progress_bar = tqdm(range(len(pd_spusn_proceed)))
     for i, item in pd_spusn_proceed.iterrows():
@@ -218,6 +222,7 @@ def get_similar_fasttext(frxs_product, nlp_model):
             nlp_spuname_list.append(item['product_name'])
             sku_list.append(item['sku'])
             cate_list.append(item['first_level_category_id'])
+            dt_list.append(item['dt'])
         except Exception as e:
             print(e)
             print(item['spu_sn'])
@@ -227,7 +232,7 @@ def get_similar_fasttext(frxs_product, nlp_model):
     d = 100
     index = faiss.IndexFlat(d, faiss.METRIC_INNER_PRODUCT)  # build the index
     index.add(arr_result)  # add vectors to the index
-    D, I = index.search(arr_result, len(arr_result))  # actual search
+    D, I = index.search(arr_result, int(len(arr_result)/ recent_days))  # actual search
     print("nlp emb similar output cnt : {}".format(len(I)), flush=True)
     nlp_sku_map = {}
     for i in range(len(nlp_spusn_list)):
@@ -237,6 +242,7 @@ def get_similar_fasttext(frxs_product, nlp_model):
         for similar_index, score in zip(I[i][1:], D[i][1:]):
             curr_cate_id = cate_list[similar_index]
             if score > nlp_score_th \
+                and dt_list[similar_index] == target_dt \
                 and cate_id==curr_cate_id \
                 and nlp_spusn_list[similar_index] != spusn \
                 and nlp_spusn_list[similar_index] not in nlp_sku_map[spusn]:
@@ -246,11 +252,12 @@ def get_similar_fasttext(frxs_product, nlp_model):
     progress_bar.close()
     return nlp_sku_map
 
-def get_similar_cv(frxs_product, cv_model):
+def get_similar_cv(frxs_product, cv_model, target_dt):
     vec_result = []
     sku_image_list = []
     cate_list = []
     spusn_list = []
+    dt_list = []
     progress_bar = tqdm(range(len(frxs_product)))
     validation_aug = getAugmentation(512, isTraining=False)
     for i, item in frxs_product.iterrows():
@@ -284,6 +291,7 @@ def get_similar_cv(frxs_product, cv_model):
             else:
                 vec_result.append(np.loadtxt(emb_path).astype('float32'))
             spusn_list.append(item['spu_sn'])
+            dt_list.append(item['dt'])
             sku_image_list.append(path)
             cate_list.append(item['second_level_category_id'])
         except Exception as e:
@@ -299,7 +307,7 @@ def get_similar_cv(frxs_product, cv_model):
     # print(index.is_trained)  # 表示索引是否需要训练的布尔值
     index.add(arr_result)  # add vectors to the index
     # print(index.ntotal)
-    D, I = index.search(arr_result, ann_cnt_cv)  # actual search
+    D, I = index.search(arr_result, int(len(arr_result) / recent_days))  # actual search
     print("cv emb similar output cnt : {}".format(len(I)), flush=True)
     cv_sku_map = {}
     for i in range(len(spusn_list)):
@@ -309,12 +317,21 @@ def get_similar_cv(frxs_product, cv_model):
         for similar_index, score in zip(I[i][1:], D[i][1:]):
             curr_cate = cate_list[similar_index]
             if score > cv_score_th \
+                and dt_list[similar_index] == target_dt \
                 and cate_id==curr_cate \
                 and spusn_list[similar_index] != spusn \
                 and spusn_list[similar_index] not in cv_sku_map[spusn]:
                 cv_sku_map[spusn].append(spusn_list[similar_index])
+            if len(cv_sku_map[spusn]) > ann_cnt_cv:
+                break
     progress_bar.close()
     return cv_sku_map
+
+def calc_end_date(begin_date, days):
+    begin_date = datetime.datetime.strptime(begin_date, '%Y-%m-%d')
+    end_date = begin_date + datetime.timedelta(days=days)
+    end_date = end_date.strftime('%Y-%m-%d')
+    return end_date
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dt", type=str)
@@ -322,7 +339,7 @@ parser.add_argument("--redis_host", type=str, default='1.1.1.1')
 parser.add_argument("--redis_password", type=str, default='password')
 parser.add_argument("--redis_port", type=int, default=6379)
 parser.add_argument("--redis_db", type=int, default=15)
-parser.add_argument("--exp_seconds", type=int, default=7*24*3600)
+parser.add_argument("--exp_seconds", type=int, default=int(1.5*24*3600))
 args = parser.parse_args()
 
 
@@ -333,11 +350,14 @@ if __name__ == '__main__':
     spark = SparkSession.builder.config(conf=sparkConf).enableHiveSupport().getOrCreate()
     sc = spark.sparkContext
 
+    target_dt = args.dt
+    start_dt = calc_end_date(args.dt, -1 * recent_days)
+
     frxs_product = spark.sql(f"""
         select * from dm_recommend.daily_recommend_frxs_skusn_details_di
         where sku is not null 
         and sku != ''
-        and dt='{args.dt}'
+        and dt>='{start_dt}'
     """).toPandas()
     frxs_product['title'] = frxs_product.apply(lambda x: gen_title(x), axis=1)
     print("frxs_product cnt : {}".format(len(frxs_product)),flush=True)
@@ -363,8 +383,8 @@ if __name__ == '__main__':
         merged_result[area_id] = {}
         frxs_product_area=frxs_product[frxs_product['area_id']==area_id]
         #nlp_similar_map = get_similar_nlp(frxs_product_area, nlp_model)
-        nlp_similar_map = get_similar_fasttext(frxs_product_area, fasttext_model)
-        cv_similar_map = get_similar_cv(frxs_product_area, cv_model)
+        nlp_similar_map = get_similar_fasttext(frxs_product_area, fasttext_model, target_dt)
+        cv_similar_map = get_similar_cv(frxs_product_area, cv_model, target_dt)
         for k in cv_similar_map.keys():
             similar_result = []
             similar_result.extend(spusn for spusn in cv_similar_map[k])
@@ -374,7 +394,7 @@ if __name__ == '__main__':
             if k not in merged_result[area_id]:
                 merged_result[area_id][k] = nlp_similar_map[k]
 
-    print(f'merged_result length : {len(merged_result.keys())}',flush=True)
+    # print(f'merged_result length : {len(merged_result.keys())}',flush=True)
 
     pool = redis.ConnectionPool(host=args.redis_host, port=args.redis_port, password=args.redis_password, db=args.redis_db)
     print("redis: {}:{} {} {}".format(args.redis_host, args.redis_port, args.redis_password, args.redis_db),flush=True)
@@ -384,9 +404,11 @@ if __name__ == '__main__':
         area_results = merged_result[area_id]
         for key in area_results:
             result = area_results[key]
+            target_dt_aka = target_dt.replace('-', '')
+            write_key = f'{target_dt_aka}:{key}'
             if len(result) > 0:
                 result_str = json.dumps(result).replace('[', '').replace(']', '').replace('"', '').replace(' ', '')
-                pipe.set(key, result_str)
-                pipe.expire(key, args.exp_seconds)
+                pipe.set(write_key, result_str)
+                pipe.expire(write_key, args.exp_seconds)
         pipe.execute()
         print(f'area {area_id} process finish', flush=True)
